@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDuongProCutePhoMaiQue - Hệ Thống Tạo Video AI Hàng Loạt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧀</text></svg>">
+    <style>
+        @keyframes glow {
+            0%, 100% { border-color: rgba(245, 158, 11, 0.3); box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+            50% { border-color: rgba(234, 179, 8, 0.7); box-shadow: 0 0 30px rgba(234, 179, 8, 0.3); }
+        }
+        .brand-glow { animation: glow 4s infinite ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen py-8 px-4 flex flex-col items-center selection:bg-amber-500 selection:text-black">
+
+    <div class="w-full max-w-4xl space-y-6">
+        
+        <!-- Header Thương Hiệu -->
+        <div class="text-center space-y-2">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold tracking-wider uppercase">
+                <span>🧀 Official Studio</span>
+                <span>•</span>
+                <span>Batch Multi-Prompt Engine</span>
+                <span>•</span>
+                <span class="text-emerald-400">🛡️ Anti-Bot Guard</span>
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+                MDuongProCutePhoMaiQue
+            </h1>
+            <p class="text-slate-400 text-sm max-w-xl mx-auto">
+                Hệ thống khởi tạo nhiều video cùng lúc với cơ chế ngụy trang sinh học, điều phối hàng đợi thông minh và bảo vệ tài khoản tối đa.
+            </p>
+        </div>
+
+        <!-- Bảng điều khiển nhập Prompts -->
+        <div class="bg-slate-900/90 p-6 sm:p-8 rounded-3xl shadow-2xl border border-slate-800 brand-glow backdrop-blur-sm">
+            
+            <!-- Chuyển đổi chế độ Nhập -->
+            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                <div class="flex gap-2">
+                    <button id="tabBatch" onclick="switchMode('batch')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 text-slate-950 transition duration-150 shadow-md">
+                        📚 Nhập Nhiều Prompt (Hàng loạt)
+                    </button>
+                    <button id="tabSingle" onclick="switchMode('single')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition duration-150">
+                        ⚡ Nhập 1 Prompt đơn
+                    </button>
+                </div>
+                <button onclick="fillSamplePrompts()" class="text-xs text-amber-400 hover:underline flex items-center gap-1 font-medium">
+                    ✨ Nạp prompt mẫu
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div id="batchInputArea">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-semibold text-slate-300 flex items-center gap-1">
+                            <span>📝 Danh sách Prompts (Mỗi dòng là 1 video riêng biệt):</span>
+                        </label>
+                        <span id="promptCountBadge" class="text-xs bg-slate-800 text-amber-400 px-2.5 py-0.5 rounded-full border border-slate-700">0 prompt</span>
+                    </div>
+                    <textarea id="batchText" rows="6" oninput="updatePromptCount()"
+                        class="w-full bg-slate-950 border border-slate-700/80 rounded-2xl p-4 text-slate-100 focus:outline-none focus:border-amber-400 placeholder-slate-500 transition duration-150 text-sm font-mono leading-relaxed"
+                        placeholder="Dòng 1: A funny cinematic video of two cute puppies playing around&#10;Dòng 2: A futuristic cybernetic samurai walking in neon rain, 4k&#10;Dòng 3: Majestic galaxy with glowing cosmic whales, unreal engine 5..."></textarea>
+                </div>
+
+                <div id="singleInputArea" class="hidden">
+                    <label class="block text-xs font-semibold mb-2 text-slate-300">
+                        💬 Nội dung Prompt:
+                    </label>
+                    <textarea id="singleText" rows="3"
+                        class="w-full bg-slate-950 border border-slate-700/80 rounded-2xl p-4 text-slate-100 focus:outline-none focus:border-amber-400 placeholder-slate-500 transition duration-150 text-sm"
+                        placeholder="Nhập nội dung video bạn muốn tạo..."></textarea>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                    <button id="submitBtn" onclick="submitPrompts()" 
+                        class="w-full sm:flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold py-3.5 rounded-xl transition duration-200 shadow-lg shadow-amber-500/20 flex justify-center items-center gap-2">
+                        <span>🚀 Đẩy Vào Hàng Đợi Tạo Hàng Loạt</span>
+                    </button>
+                    <button onclick="fetchJobs()" class="w-full sm:w-auto px-4 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 flex items-center justify-center gap-1.5 transition">
+                        <span>🔄 Làm Mới</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Khối trạng thái chống quét & thống kê -->
+            <div class="mt-5 grid grid-cols-3 gap-3 text-center text-xs">
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <span class="text-slate-400 block mb-0.5">Hàng chờ</span>
+                    <strong id="statQueued" class="text-amber-400 text-base font-mono">0</strong>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <span class="text-slate-400 block mb-0.5">Đang xử lý</span>
+                    <strong id="statProcessing" class="text-sky-400 text-base font-mono">0</strong>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <span class="text-slate-400 block mb-0.5">Đã hoàn thành</span>
+                    <strong id="statCompleted" class="text-emerald-400 text-base font-mono">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng danh sách Jobs thời gian thực -->
+        <div class="bg-slate-900/80 p-6 rounded-3xl shadow-xl border border-slate-800">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-800">
+                <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <span>🎬 Danh Sách Video Đang & Đã Tạo</span>
+                </h2>
+                <div class="flex items-center gap-2 text-xs text-slate-400">
+                    <span id="liveDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span id="liveText">Thời gian thực</span>
+                </div>
+            </div>
+
+            <div id="jobsContainer" class="space-y-4">
+                <p id="emptyPlaceholder" class="text-slate-500 text-center italic py-10 text-sm">
+                    Chưa có job nào trong phiên. Hãy nhập danh sách prompt ở trên để khởi động!
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-xs text-slate-500 py-4 space-y-1">
+            <p>© 2026 MDuongProCutePhoMaiQue AI Studio. Bảo mật nguồn 100%.</p>
+            <p class="text-[11px] text-slate-600">Equipped with Anti-Bot Jitter, Human Keystrokes & Media Masking</p>
+        </footer>
+
+    </div>
+
+    <script>
+        let currentMode = 'batch';
+        let pollTimer = null;
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const tabBatch = document.getElementById('tabBatch');
+            const tabSingle = document.getElementById('tabSingle');
+            const batchArea = document.getElementById('batchInputArea');
+            const singleArea = document.getElementById('singleInputArea');
+
+            if (mode === 'batch') {
+                tabBatch.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 text-slate-950 transition duration-150 shadow-md";
+                tabSingle.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition duration-150";
+                batchArea.classList.remove('hidden');
+                singleArea.classList.add('hidden');
+            } else {
+                tabSingle.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 text-slate-950 transition duration-150 shadow-md";
+                tabBatch.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition duration-150";
+                singleArea.classList.remove('hidden');
+                batchArea.classList.add('hidden');
+            }
+        }
+
+        function updatePromptCount() {
+            const text = document.getElementById('batchText').value;
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            document.getElementById('promptCountBadge').innerText = lines.length + ' prompt';
+        }
+
+        function fillSamplePrompts() {
+            const samples = [
+                "A cute puppy playing happily in a vibrant spring flower garden, cinematic 4k",
+                "A futuristic neon cyber city at night with flying cars, ultra realistic",
+                "A delicious hot pizza with stretching cheese in slow motion, professional food commercial"
+            ];
+            document.getElementById('batchText').value = samples.join('\n');
+            updatePromptCount();
+        }
+
+        async function submitPrompts() {
+            let prompts = [];
+            if (currentMode === 'batch') {
+                const text = document.getElementById('batchText').value;
+                prompts = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            } else {
+                const single = document.getElementById('singleText').value.trim();
+                if (single) prompts = [single];
+            }
+
+            if (prompts.length === 0) {
+                alert('Vui lòng nhập ít nhất 1 nội dung prompt!');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            btn.innerHTML = '<span>⏳ Đang đẩy vào hàng đợi...</span>';
+
+            try {
+                const response = await fetch('/api/generate-batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompts })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    if (currentMode === 'batch') {
+                        document.getElementById('batchText').value = '';
+                        updatePromptCount();
+                    } else {
+                        document.getElementById('singleText').value = '';
+                    }
+                    fetchJobs();
+                    startPolling();
+                } else {
+                    alert('Lỗi: ' + (data.error || 'Không thể tạo jobs'));
+                }
+            } catch (err) {
+                alert('Lỗi kết nối: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                btn.innerHTML = '<span>🚀 Đẩy Vào Hàng Đợi Tạo Hàng Loạt</span>';
+            }
+        }
+
+        // Cập nhật thông minh (Smart DOM Reconciliation):
+        // TUYỆT ĐỐI KHÔNG render lại toàn bộ container để người dùng xem video liên tục không bao giờ bị ngắt quãng!
+        async function fetchJobs() {
+            try {
+                const res = await fetch('/api/jobs');
+                const data = await res.json();
+
+                // Cập nhật thống kê
+                let queued = 0, processing = 0, completed = 0;
+                data.jobs.forEach(j => {
+                    if (j.status === 'queued') queued++;
+                    else if (j.status === 'processing') processing++;
+                    else if (j.status === 'completed') completed++;
+                });
+
+                document.getElementById('statQueued').innerText = queued;
+                document.getElementById('statProcessing').innerText = processing;
+                document.getElementById('statCompleted').innerText = completed;
+
+                const container = document.getElementById('jobsContainer');
+                const placeholder = document.getElementById('emptyPlaceholder');
+
+                if (data.jobs.length === 0) {
+                    if (!placeholder) {
+                        container.innerHTML = `
+                            <p id="emptyPlaceholder" class="text-slate-500 text-center italic py-10 text-sm">
+                                Chưa có job nào trong phiên. Hãy nhập danh sách prompt ở trên để khởi động!
+                            </p>
+                        `;
+                    }
+                    return;
+                }
+
+                if (placeholder) {
+                    placeholder.remove();
+                }
+
+                // Cập nhật từng Card riêng lẻ
+                data.jobs.forEach(job => {
+                    let card = document.getElementById(`job-card-${job.jobId}`);
+                    
+                    if (!card) {
+                        // Thêm card mới vào đầu danh sách
+                        card = document.createElement('div');
+                        card.id = `job-card-${job.jobId}`;
+                        card.dataset.status = job.status;
+                        card.className = "bg-slate-950 p-4 sm:p-5 rounded-2xl border border-slate-800/90 shadow-md space-y-3 transition duration-150 hover:border-slate-700";
+                        card.innerHTML = getJobCardHTML(job);
+                        container.prepend(card);
+                    } else if (card.dataset.status !== job.status) {
+                        // CHỈ CẬP NHẬT KHI TRẠNG THÁI THAY ĐỔI (ví dụ từ processing -> completed)
+                        card.dataset.status = job.status;
+                        card.innerHTML = getJobCardHTML(job);
+                    }
+                    // Nếu job đã completed và trạng thái không đổi: KHÔNG LÀM GÌ CẢ -> Video tiếp tục phát mượt mà 100%!
+                });
+
+                // Tự động điều chỉnh tần suất poll:
+                // Nếu không còn job nào đang chờ hoặc đang xử lý, giảm tốc độ poll để tiết kiệm tài nguyên
+                if (queued === 0 && processing === 0) {
+                    document.getElementById('liveDot').classList.remove('animate-ping');
+                    document.getElementById('liveText').innerText = 'Đã hoàn tất tất cả';
+                } else {
+                    document.getElementById('liveDot').classList.add('animate-ping');
+                    document.getElementById('liveText').innerText = 'Đang xử lý hàng đợi...';
+                }
+
+            } catch (e) {
+                console.error("Lỗi cập nhật jobs:", e);
+            }
+        }
+
+        function getJobCardHTML(job) {
+            let statusBadge = '';
+            let videoPlayer = '';
+
+            if (job.status === 'queued') {
+                statusBadge = `
+                    <span class="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Đang chờ trong hàng đợi
+                    </span>
+                `;
+                videoPlayer = `
+                    <div class="h-24 bg-slate-950/60 rounded-xl border border-slate-800 flex items-center justify-center text-xs text-slate-500">
+                        ⏳ Đang xếp hàng xử lý tuần tự...
+                    </div>
+                `;
+            } else if (job.status === 'processing') {
+                statusBadge = `
+                    <span class="inline-flex items-center gap-1.5 bg-sky-500/10 text-sky-300 border border-sky-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-semibold animate-pulse">
+                        <span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span> Đang render video...
+                    </span>
+                `;
+                videoPlayer = `
+                    <div class="h-28 bg-slate-950/80 rounded-xl border border-sky-500/30 flex flex-col items-center justify-center text-xs text-sky-300 gap-2">
+                        <svg class="animate-spin h-5 w-5 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>AI đang vẽ video (45s - 2 phút)...</span>
+                    </div>
+                `;
+            } else if (job.status === 'completed') {
+                statusBadge = `
+                    <span class="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
+                        ✓ Hoàn thành
+                    </span>
+                `;
+                videoPlayer = `
+                    <div class="overflow-hidden rounded-xl bg-black aspect-video flex items-center justify-center border border-slate-800 shadow-inner">
+                        <video controls playsinline preload="metadata" class="w-full h-full object-contain">
+                            <source src="${job.videoUrl}" type="video/mp4">
+                            Trình duyệt của bạn không hỗ trợ phát thẻ video.
+                        </video>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-[11px] text-slate-500 font-mono">${job.videoUrl}</span>
+                        <a href="${job.videoUrl}" download="MDuongPro_${job.jobId}.mp4" 
+                            class="text-xs bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-lg transition duration-150 flex items-center gap-1 shadow">
+                            <span>📥 Tải Video</span>
+                        </a>
+                    </div>
+                `;
+            } else if (job.status === 'failed') {
+                statusBadge = `
+                    <span class="inline-flex items-center gap-1.5 bg-red-500/10 text-red-300 border border-red-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
+                        ❌ Thất bại
+                    </span>
+                `;
+                videoPlayer = `
+                    <div class="p-3 bg-red-950/30 border border-red-800/40 rounded-xl text-xs text-red-300">
+                        ${job.error || 'Không thể tạo video'}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="flex justify-between items-center text-xs">
+                    <span class="font-mono text-slate-400">Mã Job: <strong class="text-amber-400">#${job.jobId}</strong></span>
+                    ${statusBadge}
+                </div>
+                <p class="text-xs sm:text-sm text-slate-200 bg-slate-900/60 p-3 rounded-xl border border-slate-800/60 font-medium">
+                    💬 "${job.prompt}"
+                </p>
+                ${videoPlayer}
+            `;
+        }
+
+        function startPolling() {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(fetchJobs, 2500);
+        }
+
+        // Khởi động
+        startPolling();
+        fetchJobs();
+    </script>
+</body>
+</html>

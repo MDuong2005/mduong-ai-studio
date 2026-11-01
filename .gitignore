@@ -1,0 +1,5 @@
+node_modules/
+chrome_profile/
+storage/videos/*.mp4
+.DS_Store
+Thumbs.db
