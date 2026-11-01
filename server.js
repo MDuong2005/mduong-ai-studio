@@ -165,26 +165,36 @@ class MDuongBatchQueue {
             console.log(`\n======================================================`);
             console.log(`▶️ [Job #${job.jobId}] Đang xử lý: "${job.prompt}"`);
 
+            // Nạp cookies duy trì đăng nhập trước khi vào trang
+            if (fs.existsSync(COOKIE_PATH)) {
+                try {
+                    const cookies = JSON.parse(fs.readFileSync(COOKIE_PATH, 'utf8'));
+                    if (Array.isArray(cookies) && cookies.length > 0) {
+                        await this.mainPage.setCookie(...cookies);
+                    }
+                } catch (err) {}
+            }
+
             // Mở trang tạo video mới
             console.log(`🌐 [Job #${job.jobId}] Mở trang tạo mới (https://muse.ai/thread/new)...`);
             await this.mainPage.goto('https://muse.ai/thread/new', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-            // Đợi khung prompt xuất hiện
+            // Đợi khung prompt xuất hiện (kiểm tra cả textarea, contenteditable lẫn input)
             console.log(`⌨️ [Job #${job.jobId}] Đang chờ khung nhập prompt sẵn sàng...`);
             await this.mainPage.waitForFunction(() => {
-                const el = document.querySelector('textarea') || document.querySelector('div[contenteditable="true"]');
-                return el && el.offsetParent !== null;
+                const el = document.querySelector('textarea, div[contenteditable="true"], input[type="text"], [role="textbox"]');
+                return el !== null;
             }, { timeout: 35000 });
 
             await sleepRandom(1000, 2000);
 
             // Focus vào khung nhập
             await this.mainPage.evaluate(() => {
-                const el = document.querySelector('textarea') || document.querySelector('div[contenteditable="true"]');
+                const el = document.querySelector('textarea, div[contenteditable="true"], input[type="text"], [role="textbox"]');
                 if (el) {
                     el.scrollIntoView({ block: 'center' });
                     el.focus();
-                    if (el.tagName === 'TEXTAREA') el.value = '';
+                    if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') el.value = '';
                 }
             });
 
