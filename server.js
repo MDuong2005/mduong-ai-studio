@@ -19,6 +19,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Chống trình duyệt lưu cache trang cũ
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
+
 // Phục vụ giao diện web thương hiệu riêng
 app.use(express.static(__dirname));
 
