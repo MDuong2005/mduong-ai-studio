@@ -441,6 +441,45 @@ app.get('/api/job/:id', (req, res) => {
     res.json(job);
 });
 
+app.delete('/api/job/:id', (req, res) => {
+    const { id } = req.params;
+    const job = jobsStore.get(id);
+    if (job) {
+        if (job.videoUrl) {
+            const fileName = path.basename(job.videoUrl);
+            const filePath = path.join(STORAGE_DIR, fileName);
+            if (fs.existsSync(filePath)) {
+                try { fs.unlinkSync(filePath); } catch (e) {}
+            }
+        }
+        jobsStore.delete(id);
+        batchQueue.queue = batchQueue.queue.filter(j => j.jobId !== id);
+        console.log(`🗑️ [Hệ Thống] Đã xóa job #${id} và giải phóng file liên quan.`);
+    }
+    res.json({ success: true, message: `Đã xóa job #${id}` });
+});
+
+app.post('/api/clear-jobs', (req, res) => {
+    try {
+        if (fs.existsSync(STORAGE_DIR)) {
+            const files = fs.readdirSync(STORAGE_DIR);
+            for (const file of files) {
+                if (file.endsWith('.mp4') || file.endsWith('.png')) {
+                    fs.unlinkSync(path.join(STORAGE_DIR, file));
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Lỗi khi xóa file storage:', e);
+    }
+
+    jobsStore.clear();
+    batchQueue.queue = [];
+
+    console.log('🧹 [Hệ Thống] Đã xóa sạch toàn bộ lịch sử jobs và giải phóng 100% dung lượng video trên ổ đĩa!');
+    res.json({ success: true, message: 'Đã xóa toàn bộ video và dọn sạch bộ nhớ!' });
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });

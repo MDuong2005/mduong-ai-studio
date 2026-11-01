@@ -1,5 +1,6 @@
 node_modules/
 chrome_profile/
+cookies.json
 storage/videos/*.mp4
 .DS_Store
 Thumbs.db

@@ -30,9 +30,6 @@
             <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
                 MDuongProCutePhoMaiQue
             </h1>
-            <p class="text-slate-400 text-sm max-w-xl mx-auto">
-                Hệ thống khởi tạo nhiều video cùng lúc với cơ chế ngụy trang sinh học, điều phối hàng đợi thông minh và bảo vệ tài khoản tối đa.
-            </p>
         </div>
 
         <!-- Bảng điều khiển nhập Prompts -->
@@ -105,13 +102,18 @@
 
         <!-- Bảng danh sách Jobs thời gian thực -->
         <div class="bg-slate-900/80 p-6 rounded-3xl shadow-xl border border-slate-800">
-            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-800">
+            <div class="flex flex-wrap justify-between items-center gap-3 mb-5 pb-3 border-b border-slate-800">
                 <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
                     <span>🎬 Danh Sách Video Đang & Đã Tạo</span>
                 </h2>
-                <div class="flex items-center gap-2 text-xs text-slate-400">
-                    <span id="liveDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span id="liveText">Thời gian thực</span>
+                <div class="flex items-center gap-3">
+                    <button onclick="clearAllJobs()" class="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold border border-red-500/30 flex items-center gap-1.5 transition" title="Xóa toàn bộ video và giải phóng dung lượng đĩa">
+                        <span>🗑️ Xóa Lịch Sử & Video</span>
+                    </button>
+                    <div class="flex items-center gap-2 text-xs text-slate-400">
+                        <span id="liveDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span id="liveText">Thời gian thực</span>
+                    </div>
                 </div>
             </div>
 
@@ -242,19 +244,25 @@
                 const placeholder = document.getElementById('emptyPlaceholder');
 
                 if (data.jobs.length === 0) {
-                    if (!placeholder) {
-                        container.innerHTML = `
-                            <p id="emptyPlaceholder" class="text-slate-500 text-center italic py-10 text-sm">
-                                Chưa có job nào trong phiên. Hãy nhập danh sách prompt ở trên để khởi động!
-                            </p>
-                        `;
-                    }
+                    container.innerHTML = `
+                        <p id="emptyPlaceholder" class="text-slate-500 text-center italic py-10 text-sm">
+                            Chưa có video nào trong phiên. Hãy nhập danh sách prompt ở trên để khởi động!
+                        </p>
+                    `;
                     return;
                 }
 
                 if (placeholder) {
                     placeholder.remove();
                 }
+
+                // Tự động dọn dẹp các thẻ không còn tồn tại trên server (đã bị xóa)
+                const activeJobIds = new Set(data.jobs.map(j => `job-card-${j.jobId}`));
+                Array.from(container.children).forEach(child => {
+                    if (child.id && child.id.startsWith('job-card-') && !activeJobIds.has(child.id)) {
+                        child.remove();
+                    }
+                });
 
                 // Cập nhật từng Card riêng lẻ
                 data.jobs.forEach(job => {
@@ -357,7 +365,12 @@
 
             return `
                 <div class="flex justify-between items-center text-xs">
-                    <span class="font-mono text-slate-400">Mã Job: <strong class="text-amber-400">#${job.jobId}</strong></span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono text-slate-400">Mã Job: <strong class="text-amber-400">#${job.jobId}</strong></span>
+                        <button onclick="deleteJob('${job.jobId}')" class="text-slate-500 hover:text-red-400 transition px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-red-500/40 text-[11px]" title="Xóa video này">
+                            🗑️ Xóa
+                        </button>
+                    </div>
                     ${statusBadge}
                 </div>
                 <p class="text-xs sm:text-sm text-slate-200 bg-slate-900/60 p-3 rounded-xl border border-slate-800/60 font-medium">
@@ -365,6 +378,41 @@
                 </p>
                 ${videoPlayer}
             `;
+        }
+
+        async function clearAllJobs() {
+            if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ danh sách và video đã lưu để giải phóng dung lượng ổ đĩa?')) return;
+            try {
+                const res = await fetch('/api/clear-jobs', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    const container = document.getElementById('jobsContainer');
+                    container.innerHTML = `
+                        <p id="emptyPlaceholder" class="text-slate-500 text-center italic py-10 text-sm">
+                            Đã dọn dẹp sạch sẽ toàn bộ video và lịch sử! Hãy nhập prompt để tạo video mới.
+                        </p>
+                    `;
+                    document.getElementById('statQueued').innerText = '0';
+                    document.getElementById('statProcessing').innerText = '0';
+                    document.getElementById('statCompleted').innerText = '0';
+                }
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+            }
+        }
+
+        async function deleteJob(id) {
+            try {
+                const res = await fetch(`/api/job/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    const card = document.getElementById(`job-card-${id}`);
+                    if (card) card.remove();
+                    fetchJobs();
+                }
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+            }
         }
 
         function startPolling() {
