@@ -179,12 +179,20 @@ class MDuongBatchQueue {
             console.log(`🌐 [Job #${job.jobId}] Mở trang tạo mới (https://muse.ai/thread/new)...`);
             await this.mainPage.goto('https://muse.ai/thread/new', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-            // Đợi khung prompt xuất hiện (kiểm tra cả textarea, contenteditable lẫn input)
+            // Đợi khung prompt xuất hiện (chờ tối đa 60s cho VPS tải giao diện)
             console.log(`⌨️ [Job #${job.jobId}] Đang chờ khung nhập prompt sẵn sàng...`);
-            await this.mainPage.waitForFunction(() => {
-                const el = document.querySelector('textarea, div[contenteditable="true"], input[type="text"], [role="textbox"]');
-                return el !== null;
-            }, { timeout: 35000 });
+            try {
+                await this.mainPage.waitForFunction(() => {
+                    const el = document.querySelector('textarea, div[contenteditable="true"], input[type="text"], [role="textbox"]');
+                    return el !== null;
+                }, { timeout: 60000 });
+            } catch (waitErr) {
+                // Tự động chụp ảnh màn hình lưu lại để chẩn đoán nếu bị timeout
+                const debugPath = path.join(STORAGE_DIR, 'debug_vps.png');
+                await this.mainPage.screenshot({ path: debugPath, fullPage: true }).catch(() => {});
+                console.log(`📸 [Chẩn đoán VPS] Đã lưu ảnh chụp màn hình tại: /media/debug_vps.png`);
+                throw waitErr;
+            }
 
             await sleepRandom(1000, 2000);
 
